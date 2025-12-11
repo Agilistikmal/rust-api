@@ -64,6 +64,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "🌸 Flower API is running on http://{}",
         config.server_addr()
     );
+    tracing::info!(
+        "📚 OpenAPI docs available at http://{}/openapi",
+        config.server_addr()
+    );
 
     axum::serve(listener, app).await?;
 

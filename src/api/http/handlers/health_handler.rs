@@ -1,11 +1,26 @@
 //! Health Check HTTP Handlers
 
 use axum::Json;
+use serde::Serialize;
+use utoipa::ToSchema;
 
-use crate::application::dtos::ApiResponse;
+/// Health check response
+#[derive(Debug, Serialize, ToSchema)]
+pub struct HealthResponse {
+    pub status: String,
+}
 
 /// Health check endpoint
-/// GET /health
-pub async fn health_check() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success("OK"))
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "Health",
+    responses(
+        (status = 200, description = "Service is healthy", body = HealthResponse)
+    )
+)]
+pub async fn health_check() -> Json<HealthResponse> {
+    Json(HealthResponse {
+        status: "OK".to_string(),
+    })
 }

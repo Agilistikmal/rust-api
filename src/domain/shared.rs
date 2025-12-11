@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// Base entity trait for all domain entities
@@ -10,7 +11,7 @@ pub trait Entity {
 }
 
 /// Pagination parameters
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Pagination {
     pub page: i64,
     pub per_page: i64,
