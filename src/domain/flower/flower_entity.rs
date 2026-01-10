@@ -7,15 +7,14 @@ use uuid::Uuid;
 use crate::domain::errors::DomainResult;
 use crate::domain::shared::Entity;
 
-use super::FlowerError;
-use super::flower_vo::{FlowerColor, FlowerName};
+use crate::domain::flower::errors::FlowerError;
 
 /// Flower entity representing a flower in the domain
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Flower {
     id: Uuid,
-    name: FlowerName,
-    color: FlowerColor,
+    name: String,
+    color: String,
     description: Option<String>,
     price: f64,
     stock: i32,
@@ -26,8 +25,8 @@ pub struct Flower {
 impl Flower {
     /// Create a new Flower entity
     pub fn new(
-        name: impl Into<String>,
-        color: impl Into<String>,
+        name: String,
+        color: String,
         description: Option<String>,
         price: f64,
         stock: i32,
@@ -35,8 +34,8 @@ impl Flower {
         let now = Utc::now();
         Ok(Self {
             id: Uuid::new_v4(),
-            name: FlowerName::new(name)?,
-            color: FlowerColor::new(color)?,
+            name,
+            color,
             description,
             price,
             stock,
@@ -58,8 +57,8 @@ impl Flower {
     ) -> DomainResult<Self> {
         Ok(Self {
             id,
-            name: FlowerName::new(name)?,
-            color: FlowerColor::new(color)?,
+            name,
+            color,
             description,
             price,
             stock,
@@ -70,11 +69,11 @@ impl Flower {
 
     // Getters
     pub fn name(&self) -> &str {
-        self.name.value()
+        &self.name
     }
 
     pub fn color(&self) -> &str {
-        self.color.value()
+        &self.color
     }
 
     pub fn description(&self) -> Option<&str> {
@@ -89,15 +88,27 @@ impl Flower {
         self.stock
     }
 
-    // Setters with validation
-    pub fn update_name(&mut self, name: impl Into<String>) -> DomainResult<()> {
-        self.name = FlowerName::new(name)?;
+    // Setters with basic validation
+    pub fn update_name(&mut self, name: String) -> DomainResult<()> {
+        if name.trim().is_empty() {
+            return Err(FlowerError::invalid_name("Name cannot be empty"));
+        }
+        if name.len() > 100 {
+            return Err(FlowerError::invalid_name("Name too long"));
+        }
+        self.name = name.trim().to_string();
         self.updated_at = Utc::now();
         Ok(())
     }
 
-    pub fn update_color(&mut self, color: impl Into<String>) -> DomainResult<()> {
-        self.color = FlowerColor::new(color)?;
+    pub fn update_color(&mut self, color: String) -> DomainResult<()> {
+        if color.trim().is_empty() {
+            return Err(FlowerError::invalid_color("Color cannot be empty"));
+        }
+        if color.len() > 50 {
+            return Err(FlowerError::invalid_color("Color too long"));
+        }
+        self.color = color.trim().to_lowercase();
         self.updated_at = Utc::now();
         Ok(())
     }
