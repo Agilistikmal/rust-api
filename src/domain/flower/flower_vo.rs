@@ -5,22 +5,39 @@ use serde::{Deserialize, Serialize};
 use crate::domain::errors::DomainResult;
 use crate::domain::flower::FlowerError;
 
-/// Value object for flower name
+/// Value object for flower name with domain-specific rules
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FlowerName(String);
 
 impl FlowerName {
+    /// Create a new FlowerName with domain-specific validation
     pub fn new(name: impl Into<String>) -> DomainResult<Self> {
-        let name = name.into();
-        if name.trim().is_empty() {
-            return Err(FlowerError::invalid_name("name cannot be empty"));
+        let name = name.into().trim().to_string();
+
+        // Guard clauses for domain-specific validation
+        Self::validate_name(&name)?;
+
+        Ok(Self(name))
+    }
+
+    /// Domain-specific name validation
+    fn validate_name(name: &str) -> DomainResult<()> {
+        // Check for empty or whitespace-only names
+        if name.is_empty() {
+            return Err(FlowerError::invalid_name("Name cannot be empty"));
         }
+
+        // Check name length
         if name.len() > 100 {
-            return Err(FlowerError::invalid_name(
-                "name cannot exceed 100 characters",
-            ));
+            return Err(FlowerError::invalid_name("Name cannot exceed 100 characters"));
         }
-        Ok(Self(name.trim().to_string()))
+
+        // Ensure name contains at least one alphabetic character
+        if !name.chars().any(|c| c.is_alphabetic()) {
+            return Err(FlowerError::invalid_name("Name must contain at least one alphabetic character"));
+        }
+
+        Ok(())
     }
 
     pub fn value(&self) -> &str {
@@ -34,22 +51,39 @@ impl From<FlowerName> for String {
     }
 }
 
-/// Value object for flower color
+/// Value object for flower color with domain-specific validation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FlowerColor(String);
 
 impl FlowerColor {
+    /// Create a new FlowerColor with domain-specific validation
     pub fn new(color: impl Into<String>) -> DomainResult<Self> {
-        let color = color.into();
-        if color.trim().is_empty() {
-            return Err(FlowerError::invalid_color("color cannot be empty"));
+        let color = color.into().trim().to_lowercase();
+
+        // Guard clauses for domain-specific validation
+        Self::validate_color(&color)?;
+
+        Ok(Self(color))
+    }
+
+    /// Domain-specific color validation
+    fn validate_color(color: &str) -> DomainResult<()> {
+        // Check for empty or whitespace-only colors
+        if color.is_empty() {
+            return Err(FlowerError::invalid_color("Color cannot be empty"));
         }
+
+        // Check color length
         if color.len() > 50 {
-            return Err(FlowerError::invalid_color(
-                "color cannot exceed 50 characters",
-            ));
+            return Err(FlowerError::invalid_color("Color cannot exceed 50 characters"));
         }
-        Ok(Self(color.trim().to_lowercase()))
+
+        // Ensure color contains at least one alphabetic character
+        if !color.chars().any(|c| c.is_alphabetic()) {
+            return Err(FlowerError::invalid_color("Color must contain at least one alphabetic character"));
+        }
+
+        Ok(())
     }
 
     pub fn value(&self) -> &str {
@@ -80,6 +114,12 @@ mod tests {
     }
 
     #[test]
+    fn test_flower_name_special_chars() {
+        let result = FlowerName::new("!!!!");
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn test_flower_color_valid() {
         let color = FlowerColor::new("Red").unwrap();
         assert_eq!(color.value(), "red");
@@ -88,6 +128,12 @@ mod tests {
     #[test]
     fn test_flower_color_empty() {
         let result = FlowerColor::new("");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_flower_color_special_char() {
+        let result = FlowerColor::new("!!!!");
         assert!(result.is_err());
     }
 }

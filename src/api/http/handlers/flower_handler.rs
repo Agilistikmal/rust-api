@@ -6,13 +6,14 @@ use axum::{
     http::StatusCode,
 };
 use uuid::Uuid;
+use validator::Validate;
 
 use crate::api::http::state::AppState;
 use crate::application::dtos::{
     ApiResponse, ApiResponseFlower, ApiResponsePaginatedFlower, CreateFlowerRequest, ErrorResponse,
     FlowerResponse, ListFlowersQuery, UpdateFlowerRequest,
 };
-use crate::domain::errors::DomainResult;
+use crate::domain::errors::{DomainResult, AppError};
 use crate::domain::shared::Pagination;
 
 /// Get a flower by ID
@@ -82,6 +83,21 @@ pub async fn create_flower(
     State(state): State<AppState>,
     Json(request): Json<CreateFlowerRequest>,
 ) -> DomainResult<(StatusCode, Json<ApiResponse<FlowerResponse>>)> {
+    // Validate the request first
+    request.validate().map_err(|e| AppError::validation(
+        e.field_errors()
+            .iter()
+            .map(|(field, errors)| {
+                errors
+                    .iter()
+                    .map(|error| format!("{}: {}", field, error.message.clone().unwrap_or_else(|| "Invalid input".into())))
+                    .collect::<Vec<String>>()
+            })
+            .flatten()
+            .collect::<Vec<String>>()
+            .join(", ")
+    ))?;
+
     let flower = state.flower_usecase.create_flower(request).await?;
     Ok((
         StatusCode::CREATED,
@@ -112,6 +128,21 @@ pub async fn update_flower(
     Path(id): Path<Uuid>,
     Json(request): Json<UpdateFlowerRequest>,
 ) -> DomainResult<Json<ApiResponse<FlowerResponse>>> {
+    // Validate the request first
+    request.validate().map_err(|e| AppError::validation(
+        e.field_errors()
+            .iter()
+            .map(|(field, errors)| {
+                errors
+                    .iter()
+                    .map(|error| format!("{}: {}", field, error.message.clone().unwrap_or_else(|| "Invalid input".into())))
+                    .collect::<Vec<String>>()
+            })
+            .flatten()
+            .collect::<Vec<String>>()
+            .join(", ")
+    ))?;
+
     let flower = state.flower_usecase.update_flower(id, request).await?;
     Ok(Json(ApiResponse::with_message(
         flower,
