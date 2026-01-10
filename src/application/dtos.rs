@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
+use validator::Validate;
 
 use crate::domain::flower::Flower;
 use crate::domain::shared::Entity;
@@ -55,7 +56,7 @@ impl From<Flower> for FlowerResponse {
 }
 
 /// Request DTO for creating a new Flower
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Validate)]
 #[schema(example = json!({
     "name": "Rose",
     "color": "red",
@@ -65,19 +66,28 @@ impl From<Flower> for FlowerResponse {
 }))]
 pub struct CreateFlowerRequest {
     /// Flower name (max 100 characters)
+    #[validate(length(min = 2, max = 100))]
     pub name: String,
+    
     /// Flower color (max 50 characters)
+    #[validate(length(min = 2, max = 50))]
     pub color: String,
+    
     /// Optional description
+    #[validate(length(max = 500))]
     pub description: Option<String>,
+    
     /// Price in IDR
+    #[validate(range(min = 0.0))]
     pub price: f64,
+    
     /// Initial stock quantity
+    #[validate(range(min = 0))]
     pub stock: i32,
 }
 
 /// Request DTO for updating an existing Flower
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Validate)]
 #[schema(example = json!({
     "name": "Red Rose",
     "price": 30000.0,
@@ -85,14 +95,23 @@ pub struct CreateFlowerRequest {
 }))]
 pub struct UpdateFlowerRequest {
     /// New flower name
+    #[validate(length(min = 2, max = 100))]
     pub name: Option<String>,
+    
     /// New flower color
+    #[validate(length(min = 2, max = 50))]
     pub color: Option<String>,
+    
     /// New description
+    #[validate(length(max = 500))]
     pub description: Option<String>,
+    
     /// New price
+    #[validate(range(min = 0.0))]
     pub price: Option<f64>,
+    
     /// New stock quantity
+    #[validate(range(min = 0))]
     pub stock: Option<i32>,
 }
 

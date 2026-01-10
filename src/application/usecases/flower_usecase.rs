@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::application::dtos::{CreateFlowerRequest, FlowerResponse, UpdateFlowerRequest};
 use crate::application::ports::FlowerRepository;
-use crate::domain::errors::DomainResult;
+use crate::domain::errors::{DomainResult, AppError};
 use crate::domain::flower::{Flower, FlowerError};
 use crate::domain::shared::{PaginatedResponse, Pagination};
 
@@ -72,11 +72,11 @@ impl<R: FlowerRepository> FlowerUseCase<R> {
         request: CreateFlowerRequest,
     ) -> DomainResult<FlowerResponse> {
         let flower = Flower::new(
-            request.name,
-            request.color,
-            request.description,
-            request.price,
-            request.stock,
+            request.name, 
+            request.color, 
+            request.description, 
+            request.price, 
+            request.stock
         )?;
 
         let created_flower = self.repository.create(&flower).await?;
